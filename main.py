@@ -23,7 +23,6 @@ class Game:
         self.map = Map(self, 'map/map.csv', 'map/rpg_tileset.png', 16)
         self.camera = Camera(self.map.width, self.map.height)
         self.npc = Npc(self, (200, 300), self.map.image_list[123], 3)
-        self.answer_button = Button(game, (50, 300), 'а мне прописали')
         
 
     def _events(self):
@@ -32,6 +31,7 @@ class Game:
                 self.running = False
             if event.type == pg.MOUSEBUTTONDOWN and self.answer_button.rect.collidepoint(event.pos):
                 self.npc.message.change_text('повезло тебе...')
+                self.npc
                 self.answer_button.change_text('...')
             
     
