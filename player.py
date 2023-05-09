@@ -1,19 +1,26 @@
 import pygame as pg
 from spritesheet import SpriteSheet
 from pygame.math import Vector2
+import math
+from setting import *
+
 
 class Player(pg.sprite.Sprite):
-     speed = 5
-     def __init__(self, sppath, pos):
-        super().__init__()
-
+     speed = 200
+     def __init__(self, game, sppath, pos):
+        self._layer = PLAYER_LAYER
+        super().__init__(game.all_sprites)
+        self.game = game
         spritesheet = SpriteSheet(sppath, 2)
         self._load_img(spritesheet)
         self.image = self.walk_u[0]
         self.rect = self.image.get_rect()
         self.rect.center = pos
         self.frame = 0
-     
+        self.hitbox = pg.Rect(self.rect.x, self.rect.y, self.rect.w/2, self.rect.h/4)
+        self.hitbox.centerx = self.rect.centerx
+        self.hitbox.bottom = self.rect.bottom - 5
+        self.anim_len = 4
     
      def _move(self):
             '''Changes player`s velocity vector.'''
@@ -31,8 +38,11 @@ class Player(pg.sprite.Sprite):
             if self.velocity.length() > 1:
               self.velocity.x = 0
 
-            self.velocity *= self.speed
-            self.rect.center += self.velocity
+            self.velocity *= math.ceil(self.speed * self.game.dt)
+            
+            if not self._wall_collide():
+               self.rect.center += self.velocity
+               self.hitbox.center += self.velocity
 
      def update(self):
          '''Applies other metods.'''
@@ -58,13 +68,20 @@ class Player(pg.sprite.Sprite):
           '''Animates player.'''
           if self.velocity.length() > 0:
                if self.velocity.y > 0:
-                    self.think_of_name = self.walk_d
+                    self.animation_list = self.walk_d
                elif self.velocity.y < 0:
-                    self.think_of_name = self.walk_u
+                    self.animation_list = self.walk_u
                elif self.velocity.x > 0:
-                    self.think_of_name = self.walk_r
+                    self.animation_list = self.walk_r
                elif self.velocity.x < 0:
-                    self.think_of_name = self.walk_l
-               self.frame = (self.frame + 0.5) % 4
-               self.image = self.think_of_name[int(self.frame)]
+                    self.animation_list = self.walk_l
+               self.frame = (self.frame + self.game.dt * self.speed) % self.anim_len
+               self.image = self.animation_list[int(self.frame)]
+
+     def _wall_collide(self):
+          tar_rect = self.hitbox.move(self.velocity)
+          for tile in self.game.all_walls:
+               if tar_rect.colliderect(tile.rect):
+                    return True
+          return False
 
