@@ -6,7 +6,7 @@ from setting import *
 
 
 class Npc(pg.sprite.Sprite):
-    def __init__(self, game, pos, image, hp, text=['они не прописали мне текст']) -> None:
+    def __init__(self, game, pos, image, hp, text='они не прописали мне текст') -> None:
         self._layer = GROUND_LAYER
         groups = game.all_sprites, game.all_walls
         super().__init__(groups)
@@ -47,13 +47,14 @@ class Message(pg.sprite.Sprite):
         self.font = pygame.freetype.Font(font, 15)
         self.display_text = ''
         self.pseudo_frame = 0
-        surf_text, rect_text = self.font.render(self.text)
-        if rect_text.h < 40:
-            rect_text.h = 40
-        self.image = pg.Surface((rect_text.w + 30, rect_text.h), pg.SRCALPHA)
+        surf_text, self.rect_text = self.font.render(self.text)
+        if self.rect_text.h < 40:
+            self.rect_text.h = 40
+        self.image = pg.Surface((self.rect_text.w + 30, self.rect_text.h), pg.SRCALPHA)
         self.rect = self.image.get_rect(center=pos)
         self.border = pg.Rect((0, 0), self.rect.size)
-        self.border.w = rect_text.w + 20
+        self.border.w = self.rect_text.w + 20
+        self.answer_button = Button(game, (pos[0], pos[1]), 'а мне прописали')
 
     def print(self):
         self.pseudo_frame += 0.45
@@ -68,15 +69,28 @@ class Message(pg.sprite.Sprite):
         self.pseudo_frame = 0
         self.display_text = ''
         self.kill()
+        self.answer_button.kill()
 
     def change_text(self, new_text):
         self.text = new_text
 
 class Button(pg.sprite.Sprite):
-    def __init__(self, game, pos, text, font):
+    def __init__(self, game, pos, text, font=None):
         self._layer = MESSAGE_LAYER
         super().__init__(game.all_sprites)
-        self.image = pg.Surface(())
+        self.text = text
+        self.game = game
+        self.font = pygame.freetype.Font(font, 15)
+        self.text_surf, self.text_rect = self.font.render(text, size=32)
+        self.image = pg.Surface((self.text_rect.w - 20, self.text_rect.h))
+        self.image.fill((255, 255, 255))
         self.rect = self.image.get_rect(center=pos)
-        self.text_surf, self.text_rect = font.render(text, size=32)
         self.text_rect.center = self.rect.center
+
+    def update(self):
+        self.game.screen.blit(self.image, self.rect)
+        self.game.screen.blit(self.text_surf, self.text_rect)
+        self.font.render_to(self.image, (0, 0), self.text)
+        
+    def change_text(self, new_text):
+        self.text = new_text
